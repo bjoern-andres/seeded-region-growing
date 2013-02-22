@@ -1,0 +1,3 @@
+LIBRARY "andres_seeded_region_growing"
+EXPORTS 
+	mexFunction
