@@ -148,36 +148,31 @@ seededRegionGrowing(
 			seeds.indexToCoordinates(j, coordinate.begin());
 			for(unsigned char d = 0; d < elevation.dimension(); ++d) {
 				if(coordinate[d] != 0) {
-					--coordinate[d];
-					if(seeds(coordinate.begin()) == 0) {
-						size_t k;
-                        seeds.coordinatesToIndex(coordinate.begin(), k);
-						unsigned char queueIndex = std::max(elevation(coordinate.begin()), grayLevel);
-						seeds(k) = seeds(j); // label pixel
-						queues[queueIndex].push(k);
-					}
-					++coordinate[d];
-				}
+                                    size_t k = j - seeds.strides(d);
+                                    if (seeds(k) == 0) {
+                                        unsigned char queueIndex = elevation(k);
+                                        seeds(k) = seeds(j); // label pixel
+                                        queues[queueIndex].push(k);
+                                        grayLevel = std::min(queueIndex, grayLevel);
+                                    }
+                                }
 			}
 			for(unsigned char d = 0; d < elevation.dimension(); ++d) {
 				if(coordinate[d] < seeds.shape(d) - 1) {
-					++coordinate[d];
-					if(seeds(coordinate.begin()) == 0) {
-						size_t k;
-                        seeds.coordinatesToIndex(coordinate.begin(), k);
-						unsigned char queueIndex = std::max(elevation(coordinate.begin()), grayLevel);
-						seeds(k) = seeds(j); // label pixel
-						queues[queueIndex].push(k);
-					}
-					--coordinate[d];
-				}
-			}
+                                    size_t k = j + seeds.strides(d);
+                                    if (seeds(k) == 0) {
+                                        unsigned char queueIndex = elevation(k);
+                                        seeds(k) = seeds(j); // label pixel
+                                        queues[queueIndex].push(k);
+                                        grayLevel = std::min(queueIndex, grayLevel);
+                                    }
+                                }
+                        }
 		}
 		if(grayLevel == 255) {
 			break;
 		}
 		else {
-			queues[grayLevel] = std::queue<size_t>(); // free memory
 			++grayLevel;
 		}
 	}
