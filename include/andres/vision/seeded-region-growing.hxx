@@ -112,8 +112,8 @@ seededRegionGrowing(
 template<class T>
 void 
 seededRegionGrowing(
-	const View<unsigned char>& elevation,
-	View<T>& seeds
+    const View<unsigned char>& elevation,
+    View<T>& seeds
 ) {
     if(elevation.dimension() != seeds.dimension()) {
         throw std::runtime_error("dimension of elevation and seeds mismatch.");
@@ -124,22 +124,22 @@ seededRegionGrowing(
         }
     }
 
-	// define 256 queues, one for each gray level.
-	std::vector<std::queue<size_t> > queues(256);
+    // define 256 queues, one for each gray level.
+    std::vector<std::queue<size_t> > queues(256);
 
-        // The current level being processed
-        unsigned char grayLevel = 255;
+    // The current level being processed
+    unsigned char grayLevel = 255;
 
-	// add each unlabeled pixels which is adjacent to a seed
-	// to the queue corresponding to its gray level
-	for(size_t j = 0; j < seeds.size(); ++j) {
-		if(detail::isAtSeedBorder<T>(seeds, j)) {
-			queues[elevation(j)].push(j);
+    // add each unlabeled pixels which is adjacent to a seed
+    // to the queue corresponding to its gray level
+    for(size_t j = 0; j < seeds.size(); ++j) {
+        if(detail::isAtSeedBorder<T>(seeds, j)) {
+            queues[elevation(j)].push(j);
                         grayLevel = std::min(elevation(j), grayLevel);
-		}
-	}
+        }
+    }
 
-	// grow
+    // grow
     std::vector<size_t> coordinate(elevation.dimension());
     for(;;) {
         while(!queues[grayLevel].empty()) {
@@ -169,7 +169,7 @@ seededRegionGrowing(
                     }
                 }
             }
-		}
+        }
         if(grayLevel == 255) {
             break;
         }
@@ -185,13 +185,13 @@ namespace detail {
 
 template<class T>
 inline bool isAtSeedBorder(
-	const View<T>& seeds,
-	const size_t index
+    const View<T>& seeds,
+    const size_t index
 ) {
-	if(seeds(index) == 0) {	
-		return false; // not a seed voxel
-	}
-	else {
+    if(seeds(index) == 0) {	
+        return false; // not a seed voxel
+    }
+    else {
         std::vector<size_t> coordinate(seeds.dimension());
         seeds.indexToCoordinates(index, coordinate.begin());
         for(unsigned char d = 0; d < seeds.dimension(); ++d) {
