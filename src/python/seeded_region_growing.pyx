@@ -6,7 +6,7 @@ cimport numpy as np
 
 np.import_array()
 
-cdef extern from "helper.hpp" namespace "andres":
+cdef extern from "helper.hxx" namespace "andres":
     cdef enum CoordinateOrder:
         FirstMajorOrder
         LastMajorOrder
