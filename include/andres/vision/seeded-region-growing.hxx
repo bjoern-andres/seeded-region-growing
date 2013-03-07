@@ -127,16 +127,19 @@ seededRegionGrowing(
 	// define 256 queues, one for each gray level.
 	std::vector<std::queue<size_t> > queues(256);
 
+        // The current level being processed
+        unsigned char grayLevel = 255;
+
 	// add each unlabeled pixels which is adjacent to a seed
 	// to the queue corresponding to its gray level
 	for(size_t j = 0; j < seeds.size(); ++j) {
 		if(detail::isAtSeedBorder<T>(seeds, j)) {
 			queues[elevation(j)].push(j);
+                        grayLevel = std::min(elevation(j), grayLevel);
 		}
 	}
 
 	// grow
-	unsigned char grayLevel = 0;
     std::vector<size_t> coordinate(elevation.dimension());
 	for(;;) {
 		while(!queues[grayLevel].empty()) {
@@ -150,10 +153,9 @@ seededRegionGrowing(
 				if(coordinate[d] != 0) {
                                     size_t k = j - seeds.strides(d);
                                     if (seeds(k) == 0) {
-                                        unsigned char queueIndex = elevation(k);
+                                                unsigned char queueIndex = std::max(elevation(k), grayLevel);
                                         seeds(k) = seeds(j); // label pixel
                                         queues[queueIndex].push(k);
-                                        grayLevel = std::min(queueIndex, grayLevel);
                                     }
                                 }
 			}
@@ -161,10 +163,9 @@ seededRegionGrowing(
 				if(coordinate[d] < seeds.shape(d) - 1) {
                                     size_t k = j + seeds.strides(d);
                                     if (seeds(k) == 0) {
-                                        unsigned char queueIndex = elevation(k);
+                                            unsigned char queueIndex = std::max(elevation(k), grayLevel);
                                         seeds(k) = seeds(j); // label pixel
                                         queues[queueIndex].push(k);
-                                        grayLevel = std::min(queueIndex, grayLevel);
                                     }
                                 }
                         }
@@ -173,6 +174,7 @@ seededRegionGrowing(
 			break;
 		}
 		else {
+                    queues[grayLevel] = std::queue<size_t>(); // free memory
 			++grayLevel;
 		}
 	}
