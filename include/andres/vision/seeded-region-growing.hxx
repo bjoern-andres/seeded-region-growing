@@ -141,43 +141,43 @@ seededRegionGrowing(
 
 	// grow
     std::vector<size_t> coordinate(elevation.dimension());
-	for(;;) {
-		while(!queues[grayLevel].empty()) {
-			// label pixel and remove from queue
-			size_t j = queues[grayLevel].front();
-			queues[grayLevel].pop();
+    for(;;) {
+        while(!queues[grayLevel].empty()) {
+            // label pixel and remove from queue
+            size_t j = queues[grayLevel].front();
+            queues[grayLevel].pop();
 
-			// add unlabeled neighbors to queues
-			seeds.indexToCoordinates(j, coordinate.begin());
-			for(unsigned char d = 0; d < elevation.dimension(); ++d) {
-				if(coordinate[d] != 0) {
-                                    size_t k = j - seeds.strides(d);
-                                    if (seeds(k) == 0) {
-                                        unsigned char queueIndex = std::max(elevation(k), grayLevel);
-                                        seeds(k) = seeds(j); // label pixel
-                                        queues[queueIndex].push(k);
-                                    }
-                                }
-			}
-			for(unsigned char d = 0; d < elevation.dimension(); ++d) {
-				if(coordinate[d] < seeds.shape(d) - 1) {
-                                    size_t k = j + seeds.strides(d);
-                                    if (seeds(k) == 0) {
-                                        unsigned char queueIndex = std::max(elevation(k), grayLevel);
-                                        seeds(k) = seeds(j); // label pixel
-                                        queues[queueIndex].push(k);
-                                    }
-                                }
-                        }
+            // add unlabeled neighbors to queues
+            seeds.indexToCoordinates(j, coordinate.begin());
+            for(unsigned char d = 0; d < elevation.dimension(); ++d) {
+                if(coordinate[d] != 0) {
+                    size_t k = j - seeds.strides(d);
+                    if (seeds(k) == 0) {
+                        const unsigned char queueIndex = std::max(elevation(k), grayLevel);
+                        seeds(k) = seeds(j); // label pixel
+                        queues[queueIndex].push(k);
+                    }
+                }
+            }
+            for(unsigned char d = 0; d < elevation.dimension(); ++d) {
+                if(coordinate[d] < seeds.shape(d) - 1) {
+                    size_t k = j + seeds.strides(d);
+                    if (seeds(k) == 0) {
+                        const unsigned char queueIndex = std::max(elevation(k), grayLevel);
+                        seeds(k) = seeds(j); // label pixel
+                        queues[queueIndex].push(k);
+                    }
+                }
+            }
 		}
-		if(grayLevel == 255) {
-			break;
-		}
-		else {
-                    queues[grayLevel] = std::queue<size_t>(); // free memory
-			++grayLevel;
-		}
-	}
+        if(grayLevel == 255) {
+            break;
+        }
+        else {
+            queues[grayLevel] = std::queue<size_t>(); // free memory
+            ++grayLevel;
+        }
+    }
 }
 
 // \cond SUPPRESS_DOXYGEN
@@ -192,24 +192,24 @@ inline bool isAtSeedBorder(
 		return false; // not a seed voxel
 	}
 	else {
-		std::vector<size_t> coordinate(seeds.dimension());
-		seeds.indexToCoordinates(index, coordinate.begin());
-		for(unsigned char d = 0; d < seeds.dimension(); ++d) {
-			if(coordinate[d] != 0) {
-                                if (seeds(index - seeds.strides(d)) == 0) {
-					return true;
-				}
-			}
-		}
-		for(unsigned char d = 0; d < seeds.dimension(); ++d) {
-			if(coordinate[d] < seeds.shape(d) - 1) {
-                                if (seeds(index - seeds.strides(d)) == 0) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+        std::vector<size_t> coordinate(seeds.dimension());
+        seeds.indexToCoordinates(index, coordinate.begin());
+        for(unsigned char d = 0; d < seeds.dimension(); ++d) {
+            if(coordinate[d] != 0) {
+                if (seeds(index - seeds.strides(d)) == 0) {
+                    return true;
+                }
+            }
+        }
+        for(unsigned char d = 0; d < seeds.dimension(); ++d) {
+            if(coordinate[d] < seeds.shape(d) - 1) {
+                if (seeds(index - seeds.strides(d)) == 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }
 
 } // namespace detail
