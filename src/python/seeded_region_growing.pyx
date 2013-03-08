@@ -59,12 +59,13 @@ cpdef _inplace_region_growing(np.ndarray elevation,
 def inplace_region_growing(elevation,
                            seeds):
     assert elevation.shape == seeds.shape
+    assert elevation.dtype == np.uint8
     # Unfortunately, Cython doesn't support dispatch on typed arrays of
     # arbitrary dimension, so we fetch the function directly
     try:
         _inplace_region_growing.__signatures__[str(seeds.dtype) + '_t'](elevation, seeds, 0)
     except KeyError:
-        print "region growing only implemented for the following types:"
+        print "region growing only implemented for the following seed types:"
         for k in _inplace_region_growing.__signatures__.keys():
             print "    ", k
         raise
