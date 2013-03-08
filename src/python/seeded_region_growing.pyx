@@ -28,8 +28,10 @@ ctypedef fused seedtype:
     np.int16_t
     np.int32_t
 
-cpdef inplace_region_growing_2D(np.ndarray[np.uint8_t, ndim=2, mode='strided'] elevation,
-                                np.ndarray[seedtype, ndim=2, mode='strided'] seeds):
+
+cpdef _inplace_region_growing(np.ndarray elevation,
+                              np.ndarray seeds,
+                              seedtype ignore):
     cdef npView[np.uint8_t] *elevation_view
     cdef npView[seedtype] *seed_view
     cdef SeededRegionGrower[seedtype] grower
@@ -54,3 +56,15 @@ cpdef inplace_region_growing_2D(np.ndarray[np.uint8_t, ndim=2, mode='strided'] e
     del elevation_view
     del seed_view
 
+def inplace_region_growing(elevation,
+                           seeds):
+    assert elevation.shape == seeds.shape
+    # Unfortunately, Cython doesn't support dispatch on typed arrays of
+    # arbitrary dimension, so we fetch the function directly
+    try:
+        _inplace_region_growing.__signatures__[str(seeds.dtype) + '_t'](elevation, seeds, 0)
+    except KeyError:
+        print "region growing only implemented for the following types:"
+        for k in _inplace_region_growing.__signatures__.keys():
+            print "    ", k
+        raise
