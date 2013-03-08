@@ -112,8 +112,8 @@ seededRegionGrowing(
 template<class T>
 void 
 seededRegionGrowing(
-	const View<unsigned char>& elevation,
-	View<T>& seeds
+    const View<unsigned char>& elevation,
+    View<T>& seeds
 ) {
     if(elevation.dimension() != seeds.dimension()) {
         throw std::runtime_error("dimension of elevation and seeds mismatch.");
@@ -124,63 +124,63 @@ seededRegionGrowing(
         }
     }
 
-	// define 256 queues, one for each gray level.
-	std::vector<std::queue<size_t> > queues(256);
+    // define 256 queues, one for each gray level.
+    std::vector<std::queue<size_t> > queues(256);
 
-	// add each unlabeled pixels which is adjacent to a seed
-	// to the queue corresponding to its gray level
-	for(size_t j = 0; j < seeds.size(); ++j) {
-		if(detail::isAtSeedBorder<T>(seeds, j)) {
-			queues[elevation(j)].push(j);
-		}
-	}
+    // add each unlabeled pixels which is adjacent to a seed
+    // to the queue corresponding to its gray level
+    for(size_t j = 0; j < seeds.size(); ++j) {
+        if(detail::isAtSeedBorder<T>(seeds, j)) {
+            queues[elevation(j)].push(j);
+        }
+    }
 
-	// grow
-	unsigned char grayLevel = 0;
+    // grow
+    unsigned char grayLevel = 0;
     std::vector<size_t> coordinate(elevation.dimension());
-	for(;;) {
-		while(!queues[grayLevel].empty()) {
-			// label pixel and remove from queue
-			size_t j = queues[grayLevel].front();
-			queues[grayLevel].pop();
+    for(;;) {
+        while(!queues[grayLevel].empty()) {
+            // label pixel and remove from queue
+            size_t j = queues[grayLevel].front();
+            queues[grayLevel].pop();
 
-			// add unlabeled neighbors to queues
-			seeds.indexToCoordinates(j, coordinate.begin());
-			for(unsigned char d = 0; d < elevation.dimension(); ++d) {
-				if(coordinate[d] != 0) {
-					--coordinate[d];
-					if(seeds(coordinate.begin()) == 0) {
-						size_t k;
+            // add unlabeled neighbors to queues
+            seeds.indexToCoordinates(j, coordinate.begin());
+            for(unsigned char d = 0; d < elevation.dimension(); ++d) {
+                if(coordinate[d] != 0) {
+                    --coordinate[d];
+                    if(seeds(coordinate.begin()) == 0) {
+                        size_t k;
                         seeds.coordinatesToIndex(coordinate.begin(), k);
-						unsigned char queueIndex = std::max(elevation(coordinate.begin()), grayLevel);
-						seeds(k) = seeds(j); // label pixel
-						queues[queueIndex].push(k);
-					}
-					++coordinate[d];
-				}
-			}
-			for(unsigned char d = 0; d < elevation.dimension(); ++d) {
-				if(coordinate[d] < seeds.shape(d) - 1) {
-					++coordinate[d];
-					if(seeds(coordinate.begin()) == 0) {
-						size_t k;
+                        unsigned char queueIndex = std::max(elevation(coordinate.begin()), grayLevel);
+                        seeds(k) = seeds(j); // label pixel
+                        queues[queueIndex].push(k);
+                    }
+                    ++coordinate[d];
+                }
+            }
+            for(unsigned char d = 0; d < elevation.dimension(); ++d) {
+                if(coordinate[d] < seeds.shape(d) - 1) {
+                    ++coordinate[d];
+                    if(seeds(coordinate.begin()) == 0) {
+                        size_t k;
                         seeds.coordinatesToIndex(coordinate.begin(), k);
-						unsigned char queueIndex = std::max(elevation(coordinate.begin()), grayLevel);
-						seeds(k) = seeds(j); // label pixel
-						queues[queueIndex].push(k);
-					}
-					--coordinate[d];
-				}
-			}
-		}
-		if(grayLevel == 255) {
-			break;
-		}
-		else {
-			queues[grayLevel] = std::queue<size_t>(); // free memory
-			++grayLevel;
-		}
-	}
+                        unsigned char queueIndex = std::max(elevation(coordinate.begin()), grayLevel);
+                        seeds(k) = seeds(j); // label pixel
+                        queues[queueIndex].push(k);
+                    }
+                    --coordinate[d];
+                }
+            }
+        }
+        if(grayLevel == 255) {
+            break;
+        }
+        else {
+            queues[grayLevel] = std::queue<size_t>(); // free memory
+            ++grayLevel;
+        }
+    }
 }
 
 // \cond SUPPRESS_DOXYGEN
@@ -188,35 +188,35 @@ namespace detail {
 
 template<class T>
 inline bool isAtSeedBorder(
-	const View<T>& seeds,
-	const size_t index
+    const View<T>& seeds,
+    const size_t index
 ) {
-	if(seeds(index) == 0) {	
-		return false; // not a seed voxel
-	}
-	else {
-		std::vector<size_t> coordinate(seeds.dimension());
-		seeds.indexToCoordinates(index, coordinate.begin());
-		for(unsigned char d = 0; d < seeds.dimension(); ++d) {
-			if(coordinate[d] != 0) {
-				--coordinate[d];
-				if(seeds(coordinate.begin()) == 0) {
-					return true;
-				}
-				++coordinate[d];
-			}
-		}
-		for(unsigned char d = 0; d < seeds.dimension(); ++d) {
-			if(coordinate[d] < seeds.shape(d) - 1) {
-				++coordinate[d];
-				if(seeds(coordinate.begin()) == 0) {
-					return true;
-				}
-				--coordinate[d];
-			}
-		}
-		return false;
-	}
+    if(seeds(index) == 0) {	
+        return false; // not a seed voxel
+    }
+    else {
+        std::vector<size_t> coordinate(seeds.dimension());
+        seeds.indexToCoordinates(index, coordinate.begin());
+        for(unsigned char d = 0; d < seeds.dimension(); ++d) {
+            if(coordinate[d] != 0) {
+                --coordinate[d];
+                if(seeds(coordinate.begin()) == 0) {
+                    return true;
+                }
+                ++coordinate[d];
+            }
+        }
+        for(unsigned char d = 0; d < seeds.dimension(); ++d) {
+            if(coordinate[d] < seeds.shape(d) - 1) {
+                ++coordinate[d];
+                if(seeds(coordinate.begin()) == 0) {
+                    return true;
+                }
+                --coordinate[d];
+            }
+        }
+        return false;
+    }
 }
 
 } // namespace detail
