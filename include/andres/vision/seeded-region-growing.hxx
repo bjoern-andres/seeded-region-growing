@@ -53,7 +53,9 @@ namespace vision {
 
 namespace detail {
    template<class T> 
-      inline bool isAtSeedBorder(const View<T>& seeds, const size_t index);
+      inline bool isAtSeedBorder(const View<T>& seeds,
+                                 const size_t index,
+                                 const std::vector<size_t> &seeds_shapestrides);
 }
 
 /// Seeded region growing in an n-dimension array, using the 2n-neighborhood.
@@ -102,6 +104,24 @@ seededRegionGrowing(
     seededRegionGrowing(discreteElevation, segmentation);
 }
 
+template <class A, class B>
+static inline size_t transferIndex(
+    const View<A> &a,
+    const View<B> &b,
+    const size_t ai)
+{
+    if (a.coordinateOrder() == b.coordinateOrder()) {
+        return ai;
+    }
+    else {
+        std::vector<size_t> coordinates(a.dimension());
+        size_t bi;
+        a.indexToCoordinates(ai, coordinates.begin());
+        b.coordinatesToIndex(coordinates.begin(), bi);
+        return bi;
+    }
+}
+
 /// Seeded region growing in an n-dimension array, using the 2n-neighborhood
 ///
 /// This function operates in-place on its second parameter.
@@ -130,12 +150,21 @@ seededRegionGrowing(
     // The current level being processed
     unsigned char grayLevel = 255;
 
+    // compute shape strides for elevation and seeds
+    std::vector<size_t> elevation_shapestrides(elevation.dimension());
+    std::vector<size_t> seeds_shapestrides(elevation.dimension());
+    marray_detail::stridesFromShape(elevation.shapeBegin(), elevation.shapeEnd(),
+                                    elevation_shapestrides.begin(), elevation.coordinateOrder());
+    marray_detail::stridesFromShape(seeds.shapeBegin(), seeds.shapeEnd(),
+                                    seeds_shapestrides.begin(), seeds.coordinateOrder());
+
     // add each unlabeled pixels which is adjacent to a seed
     // to the queue corresponding to its gray level
     for(size_t j = 0; j < seeds.size(); ++j) {
-        if(detail::isAtSeedBorder<T>(seeds, j)) {
-            queues[elevation(j)].push(j);
-                        grayLevel = std::min(elevation(j), grayLevel);
+        if(detail::isAtSeedBorder<T>(seeds, j, seeds_shapestrides)) {
+            size_t ej = transferIndex(seeds, elevation, j);
+            queues[elevation(ej)].push(j);
+            grayLevel = std::min(elevation(ej), grayLevel);
         }
     }
 
@@ -149,11 +178,14 @@ seededRegionGrowing(
 
             // add unlabeled neighbors to queues
             seeds.indexToCoordinates(j, coordinate.begin());
+            size_t ej;
+            elevation.coordinatesToIndex(coordinate.begin(), ej);
             for(unsigned char d = 0; d < elevation.dimension(); ++d) {
                 if(coordinate[d] != 0) {
-                    size_t k = j - seeds.strides(d);
+                    size_t k = j - seeds_shapestrides[d];
+                    size_t ek = ej - elevation_shapestrides[d];
                     if (seeds(k) == 0) {
-                        const unsigned char queueIndex = std::max(elevation(k), grayLevel);
+                        const unsigned char queueIndex = std::max(elevation(ek), grayLevel);
                         seeds(k) = seeds(j); // label pixel
                         queues[queueIndex].push(k);
                     }
@@ -161,9 +193,10 @@ seededRegionGrowing(
             }
             for(unsigned char d = 0; d < elevation.dimension(); ++d) {
                 if(coordinate[d] < seeds.shape(d) - 1) {
-                    size_t k = j + seeds.strides(d);
+                    size_t k = j + seeds_shapestrides[d];
+                    size_t ek = ej + elevation_shapestrides[d];
                     if (seeds(k) == 0) {
-                        const unsigned char queueIndex = std::max(elevation(k), grayLevel);
+                        const unsigned char queueIndex = std::max(elevation(ek), grayLevel);
                         seeds(k) = seeds(j); // label pixel
                         queues[queueIndex].push(k);
                     }
@@ -186,7 +219,8 @@ namespace detail {
 template<class T>
 inline bool isAtSeedBorder(
     const View<T>& seeds,
-    const size_t index
+    const size_t index,
+    const std::vector<size_t> &seeds_shapestrides
 ) {
     if(seeds(index) == 0) {	
         return false; // not a seed voxel
@@ -196,14 +230,14 @@ inline bool isAtSeedBorder(
         seeds.indexToCoordinates(index, coordinate.begin());
         for(unsigned char d = 0; d < seeds.dimension(); ++d) {
             if(coordinate[d] != 0) {
-                if (seeds(index - seeds.strides(d)) == 0) {
+                if (seeds(index - seeds_shapestrides[d]) == 0) {
                     return true;
                 }
             }
         }
         for(unsigned char d = 0; d < seeds.dimension(); ++d) {
             if(coordinate[d] < seeds.shape(d) - 1) {
-                if (seeds(index - seeds.strides(d)) == 0) {
+                if (seeds(index + seeds_shapestrides[d]) == 0) {
                     return true;
                 }
             }
