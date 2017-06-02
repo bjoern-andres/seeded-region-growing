@@ -8,7 +8,7 @@ file(GLOB headers include/andres/*.hxx include/andres/vision/*.hxx)
 ##############################################################################
 find_package(Matlab QUIET)
 if(MATLAB_FOUND)
-    INCLUDE_DIRECTORIES(${MATLAB_INCLUDE_DIR})
+    INCLUDE_DIRECTORIES(${Matlab_INCLUDE_DIRS})
     message(STATUS "MATLAB found")
 else()
     message("MATLAB not found")
